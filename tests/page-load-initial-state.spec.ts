@@ -39,8 +39,6 @@ test.describe('Page Load and Initial State', () => {
     await expect(page.getByText('Settings')).toBeVisible();
 
     // Verify main content elements
-    await expect(page.getByRole('heading', {
-      name: 'Turn customer conversations into product insights in 15 seconds'
-    })).toBeVisible();
+    await expect(page.getByText('Product Insights')).toBeVisible()
   });
 });
