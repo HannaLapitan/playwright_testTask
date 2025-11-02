@@ -1,0 +1,1247 @@
+openapi: 3.1.0
+info:
+  title: ClosedLoop MCP Server API
+  description: |
+    # ClosedLoop MCP Server API Documentation
+    
+    ## What is the MCP Server?
+    
+    The **MCP (Model Context Protocol) Server** is the brain behind ClosedLoop AI's customer feedback automation. It automatically extracts actionable insights from your sales calls and routes them directly to your product team.
+    
+    **Think of it as your AI-powered feedback translator** - it listens to every customer conversation, understands what they really want, and turns it into structured, actionable product insights.
+    
+    ##Why Use the MCP Server?
+    
+    ### **For Sales Teams:**
+    - **Zero Extra Work**: Keep doing your calls normally - we handle the rest
+    - **Never Miss Feedback**: Every customer insight gets captured automatically
+    - **Better Follow-ups**: Know exactly what customers want before your next call
+    
+    ### **For Product Teams:**
+    - **Real Customer Voice**: Get unfiltered feedback from actual users
+    - **Prioritized Insights**: AI automatically categorizes and prioritizes feedback
+    - **Actionable Data**: No more guessing - know exactly what to build next
+    - **Time Savings**: Skip the manual feedback collection and analysis
+    
+    ### **For Engineering Teams:**
+    - **Structured Data**: Clean, consistent feedback data for your systems
+    - **API-First**: Integrate with your existing tools and workflows
+    - **Real-time Updates**: Get feedback as it happens, not weeks later
+    
+    ##How It Works
+    
+    1. **Connect Your Tools**: Link Gong, Salesforce, or other call platforms
+    2. **AI Analysis**: Our AI listens to every call and extracts key insights
+    3. **Smart Categorization**: Feedback gets automatically tagged and prioritized
+    4. **Direct Delivery**: Insights flow directly to your product team's tools
+    5. **Track Impact**: Monitor how feedback drives product decisions
+    
+    ##What You Get
+    
+    ### **Rich Feedback Data:**
+    - Customer quotes and sentiment analysis
+    - Feature requests with priority levels
+    - Bug reports with context
+    - Competitive insights and market trends
+    
+    ### **Smart Organization:**
+    - Automatic categorization (UI, features, bugs, etc.)
+    - Priority scoring (low, medium, high, critical)
+    - Team assignment and workflow integration
+    - Historical tracking and trend analysis
+    
+    ##API Features
+    
+    - **Insights Management**: Create, list, and manage AI-processed insights
+    - **Team Management**: Manage team settings and website configurations
+    - **Usage Tracking**: Monitor API usage and credit consumption
+    - **Integration Management**: Manage connected platforms and services
+    
+    ## Authentication
+    
+    All API endpoints require authentication via API key in the `Authorization` header.
+    
+    ```bash
+    # Get your API key from the ClosedLoop AI dashboard
+    curl -H "Authorization: Bearer YOUR_API_KEY" https://mcp.closedloop.sh/ingest
+    ```
+
+    ## Base URLs
+    - **Production**: `https://mcp.closedloop.sh`
+    
+    ##  Rate Limits
+    - **Free Plan**: 100 requests/hour
+    - **Pro Plan**: 1,000 requests/hour
+    - **Enterprise**: 10,000 requests/hour
+    
+    ##  Quick Start Examples
+    
+    ### Submit Customer Feedback
+    ```bash
+    curl -X POST -H "Authorization: Bearer YOUR_API_KEY" \
+         -H "Content-Type: application/json" \
+         -d '{"content":"Users want dark mode","title":"Dark Mode Request","customer_id":"customer-123"}' \
+         "https://mcp.closedloop.sh/ingest"
+    ```
+    
+    ### Get AI-Processed Insights
+    ```bash
+    curl -H "Authorization: Bearer YOUR_API_KEY" \
+         "https://mcp.closedloop.sh/feedbacks?limit=10&status=open"
+    ```
+    
+    ### Check Integration Status
+    ```bash
+    curl -H "Authorization: Bearer YOUR_API_KEY" \
+         "https://mcp.closedloop.sh/integrations"
+    ```
+  version: 1.0.0
+  contact:
+    name: ClosedLoop AI Support
+    email: support@closedloop.sh
+    url: https://closedloop.sh
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: https://closedloop.sh/terms
+  x-logo:
+    url: https://closedloop.sh/closedloop-logo.png
+    altText: ClosedLoop AI Logo
+
+servers:
+  - url: https://mcp.closedloop.sh
+    description: Production MCP server
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /ingest:
+    post:
+      tags:
+        - Ingest
+      summary: Submit Raw Customer Data for Processing
+      description: |
+        **Submit raw customer data** for AI processing and analysis.
+        
+        This endpoint accepts raw customer data from any source (calls, emails, surveys, support tickets, etc.)
+        and queues it for AI analysis. The data will be processed and insights will appear in `/feedbacks`
+        once analysis is complete.
+        
+        **Common use cases:**
+        - Submitting raw call transcripts for analysis
+        - Uploading customer email conversations
+        - Recording survey responses and feedback
+        - Adding support ticket content for processing
+        - Submitting interview notes and recordings
+        
+        **What to submit:**
+        - Raw call transcripts and recordings
+        - Email conversations with customers
+        - Survey responses and feedback forms
+        - Support ticket content
+        - Interview notes and recordings
+        - Any unstructured customer communication
+
+        **Data Flow:** Submit raw data here → AI Processing → Available as insights in `/feedbacks`
+      operationId: submitFeedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitFeedbackRequest'
+      responses:
+        '201':
+          description: Feedback submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: "123e4567-e89b-12d3-a456-426614174000"
+                      title:
+                        type: string
+                        example: "Users want dark mode"
+                      created_at:
+                        type: string
+                        format: date-time
+                        example: "2025-01-27T10:30:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    get:
+      tags:
+        - Ingest
+      summary: List Submitted Raw Data
+      description: |
+        **Get all submitted raw data** that's being processed or awaiting AI analysis.
+        
+        This is your "processing queue" of raw customer data (calls, emails, surveys, etc.)
+        that have been submitted for AI analysis. Perfect for tracking processing status
+        and monitoring the AI analysis pipeline.
+        
+        **What you'll see:**
+        - Raw data submissions (calls, emails, surveys, etc.)
+        - Processing status (processing, completed, failed)
+        - Submission timestamps and metadata
+        - Error messages if processing failed
+        
+        **Why this matters:**
+        - Track what raw data is being processed
+        - Monitor processing status and errors
+        - Build automated workflows around data ingestion
+        - Debug processing issues
+
+        **Data Flow:** Submit raw data here → AI Processing → Available as insights in `/feedbacks`
+      operationId: listSubmittedFeedback
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items to return
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [processing, completed, failed, all]
+            default: all
+          description: Filter by processing status
+      responses:
+        '200':
+          description: List of submitted feedback items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      feedbacks:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SubmittedFeedback'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ingest/{id}:
+    get:
+      tags:
+        - Ingest
+      summary: Get Submitted Raw Data Detail
+      description: Get detailed information about a specific submitted raw data item with full content
+      operationId: getSubmittedFeedbackDetail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Feedback ID
+      responses:
+        '200':
+          description: Submitted feedback details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/SubmittedFeedbackDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /feedbacks:
+    get:
+      tags:
+        - Insights
+      summary: List AI-Processed Insights
+      description: |
+        **Get all AI-analyzed customer insights** with powerful filtering options.
+        
+        This endpoint returns structured insights data that has been processed by our AI,
+        including customer insights, sentiment analysis, and prioritized recommendations.
+        
+        **Perfect for:**
+        - Building insights dashboards
+        - Creating product roadmaps
+        - Tracking customer sentiment trends
+        - Generating reports for stakeholders
+        
+        **What you get:**
+        - AI-analyzed insights with severity levels
+        - Pain points and feature requests
+        - Competitive gaps and willingness to pay
+        - Use cases and feature areas
+      operationId: listInsights
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of insights items to return
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Start date for insights (YYYY-MM-DD)
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+          description: End date for insights (YYYY-MM-DD)
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [critical, high, medium, low, all]
+            default: all
+          description: Filter by insights severity level
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, closed, all]
+            default: all
+          description: Filter by insights status
+        - name: source_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by source ID
+        - name: tag
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+            pattern: '^[a-zA-Z0-9_-]+$'
+          description: Filter by tag (alphanumeric with underscores and hyphens)
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [timestamp, severity, status]
+            default: timestamp
+          description: Sort by field
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort order
+      responses:
+        '200':
+          description: List of AI-processed insights items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      feedbacks:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ProcessedInsight'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /feedbacks/{id}:
+    get:
+      tags:
+        - Insights
+      summary: Get AI-Processed Insight Detail
+      description: Get detailed information about a specific AI-processed insight item
+      operationId: getInsightDetail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Insight ID
+      responses:
+        '200':
+          description: AI-processed insight details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/ProcessedInsightDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /team/website:
+    get:
+      tags:
+        - Team
+      summary: Get Team Website
+      description: |
+        **Get your product's website URL** for AI context and analysis.
+        
+        This helps ClosedLoop AI understand your product better for more accurate feedback analysis:
+        - Learn about your product features from website content
+        - Understand your competitors and market positioning
+        - Analyze pricing and value propositions
+        - Provide product-specific insights instead of generic feedback
+        - Better categorize feedback by feature area
+      operationId: getTeamWebsite
+      responses:
+        '200':
+          description: Team website information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      website:
+                        type: string
+                        format: uri
+                        example: "https://example.com"
+                      updated_at:
+                        type: string
+                        format: date-time
+                        example: "2025-01-27T10:30:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Team
+      summary: Update Team Website
+      description: |
+        **Update your product's website URL** for AI context and analysis.
+        
+        Setting your product website helps ClosedLoop AI provide more accurate and relevant feedback analysis by understanding your product's features, positioning, and market context.
+      operationId: updateTeamWebsite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - website
+              properties:
+                website:
+                  type: string
+                  format: uri
+                  example: "https://example.com"
+                  description: The team's website URL
+      responses:
+        '200':
+          description: Team website updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      website:
+                        type: string
+                        format: uri
+                        example: "https://example.com"
+                      updated_at:
+                        type: string
+                        format: date-time
+                        example: "2025-01-27T10:30:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /usage:
+    get:
+      tags:
+        - Usage
+      summary: List Usage Records
+      description: |
+        **Track your API usage and credit consumption** to stay within limits.
+        
+        Monitor how much you're using ClosedLoop AI and optimize your workflows.
+        Essential for cost management and understanding your team's usage patterns.
+        
+        **What you can track:**
+        - Call analysis credits consumed
+        - Feedback generation costs
+        - Integration sync operations
+        - API call volumes and patterns
+      operationId: listUsage
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of usage records to return
+      responses:
+        '200':
+          description: List of usage records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      usage:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UsageRecord'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /usage/{id}:
+    get:
+      tags:
+        - Usage
+      summary: Get Usage Detail
+      description: Get detailed usage information for a specific record
+      operationId: getUsageDetail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Usage record ID
+      responses:
+        '200':
+          description: Usage record details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageRecord'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /integrations:
+    get:
+      tags:
+        - Integrations
+      summary: List Integrations
+      description: Get all active integrations for the authenticated team
+      operationId: listIntegrations
+      responses:
+        '200':
+          description: List of active integrations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Integration'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /integrations/{id}:
+    get:
+      tags:
+        - Integrations
+      summary: Get Integration Detail
+      description: Get detailed information about a specific integration
+      operationId: getIntegrationDetail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Integration ID
+      responses:
+        '200':
+          description: Integration details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Integration'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: "API key for authentication (format: Bearer YOUR_API_KEY)"
+
+  schemas:
+    ProcessedInsight:
+      type: object
+      required:
+        - id
+        - title
+        - timestamp
+        - severity
+        - status
+        - source
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+          description: Unique insight identifier
+        title:
+          type: string
+          example: "Users want dark mode toggle"
+          description: AI-generated insight title
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-27T10:30:00Z"
+          description: When the feedback was originally captured
+        input_id:
+          type: string
+          format: uuid
+          example: "987fcdeb-51a2-43d1-b456-426614174000"
+          description: Reference to the original customer input
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+          example: "medium"
+          description: AI-assessed severity level
+        status:
+          type: string
+          enum: [open, closed]
+          example: "open"
+          description: Current insight status
+        source:
+          type: string
+          example: "gong_call_abc123"
+          description: Source of the insight (call ID, survey, etc.)
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-27T10:30:00Z"
+          description: When the insight was processed
+
+    ProcessedInsightDetail:
+      type: object
+      required:
+        - id
+        - title
+        - timestamp
+        - severity
+        - status
+        - source
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+          description: Unique insight identifier
+        title:
+          type: string
+          example: "Users want dark mode toggle"
+          description: AI-generated insight title
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-27T10:30:00Z"
+          description: When the feedback was originally captured
+        clarity:
+          type: number
+          minimum: 0
+          maximum: 1
+          example: 0.85
+          description: AI confidence in signal clarity (0-1)
+        is_deal_blocker:
+          type: boolean
+          example: false
+          description: Whether this insight blocks deals
+        pain_point:
+          type: string
+          example: "Users struggle with bright interface in low light"
+          description: AI-identified pain point
+        workaround:
+          type: string
+          example: "Users currently use browser dark mode extensions"
+          description: Current workaround customers use
+        competitor_gap:
+          type: string
+          example: "Competitor X has native dark mode"
+          description: Competitive gap identified
+        willingness_to_pay:
+          type: string
+          example: "High - users mentioned paying extra for this feature"
+          description: Customer willingness to pay for solution
+        use_case:
+          type: string
+          example: "Night-time usage and accessibility"
+          description: Primary use case for this insight
+        feature_area:
+          type: string
+          example: "UI/UX"
+          description: Feature area this insight relates to
+        source_url:
+          type: string
+          format: uri
+          example: "https://gong.io/calls/abc123"
+          description: URL to original source
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-27T10:30:00Z"
+          description: When the insight was processed
+
+    SubmittedFeedback:
+      type: object
+      required:
+        - id
+        - title
+        - created_at
+        - status
+        - customer_id
+        - source_id
+        - source_url
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+          description: Unique feedback identifier
+        title:
+          type: string
+          example: "Customer feedback from call"
+          description: Feedback title
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-27T10:30:00Z"
+          description: When the feedback was submitted
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-01-27T10:30:00Z"
+          description: When the feedback was last updated
+        status:
+          type: string
+          enum: [processing, completed, failed]
+          example: "processing"
+          description: Processing status
+        customer_id:
+          type: string
+          example: "customer_123"
+          description: Customer identifier
+        source_id:
+          type: string
+          example: "call_abc123"
+          description: Source identifier
+        source_url:
+          type: string
+          format: uri
+          example: "https://gong.io/calls/abc123"
+          description: URL to original source
+
+    SubmittedFeedbackDetail:
+      type: object
+      required:
+        - id
+        - title
+        - content
+        - created_at
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+          description: Unique feedback identifier
+        title:
+          type: string
+          example: "Customer feedback from call"
+          description: Feedback title
+        content:
+          type: string
+          example: "The customer mentioned wanting a dark mode option for the interface..."
+          description: Full feedback content
+        source_url:
+          type: string
+          format: uri
+          example: "https://gong.io/calls/abc123"
+          description: URL to original source
+        source_id:
+          type: string
+          example: "call_abc123"
+          description: Source identifier
+        source_timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-27T10:30:00Z"
+          description: When the feedback was originally captured
+        customer_id:
+          type: string
+          example: "customer_123"
+          description: Customer identifier
+        reporter_name:
+          type: string
+          example: "John Smith"
+          description: Name of person who provided feedback
+        reporter_email:
+          type: string
+          format: email
+          example: "john@example.com"
+          description: Email of person who provided feedback
+        language:
+          type: string
+          example: "en"
+          description: Language code (ISO 639-1)
+        metadata:
+          type: object
+          example: {"call_duration": 1800, "participants": 3}
+          description: Additional metadata
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["ui", "accessibility", "feature-request"]
+          description: Feedback tags
+        status:
+          type: string
+          enum: [processing, completed, failed]
+          example: "processing"
+          description: Processing status
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-27T10:30:00Z"
+          description: When the feedback was submitted
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-01-27T10:30:00Z"
+          description: When the feedback was last updated
+        claimed_at:
+          type: string
+          format: date-time
+          example: "2025-01-27T10:30:00Z"
+          description: When processing was claimed
+        retry_count:
+          type: integer
+          example: 0
+          description: Number of processing retries
+        error_message:
+          type: string
+          example: "Processing failed due to content length"
+          description: Error message if processing failed
+        credits_consumed:
+          type: integer
+          example: 5
+          description: Credits consumed for processing
+        feedback_count:
+          type: integer
+          example: 1
+          description: Number of processed feedback items generated
+
+    Integration:
+      type: object
+      required:
+        - id
+        - type
+        - name
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "integration_123456789"
+          description: Unique integration identifier
+        type:
+          type: string
+          enum: [gong, salesforce, hubspot, slack, teams, zoom, typeform, uservoice, canny, productboard]
+          example: "gong"
+          description: Integration type
+        name:
+          type: string
+          example: "Gong Production"
+          description: Integration display name
+        status:
+          type: string
+          enum: [active, inactive, error, pending]
+          example: "active"
+          description: Integration status
+        settings:
+          type: object
+          description: Integration-specific settings
+          example:
+            webhookUrl: "https://mcp.closedloop.sh/webhooks/meetings/gong"
+            syncFrequency: "hourly"
+        last_sync_at:
+          type: string
+          format: date-time
+          example: "2025-01-27T10:00:00Z"
+          description: Last successful sync timestamp
+        error_message:
+          type: string
+          example: "Invalid API credentials"
+          description: Last error message if status is error
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-01-27T10:30:00Z"
+          description: Last update timestamp
+
+    UsageRecord:
+      type: object
+      required:
+        - id
+        - type
+        - credits
+        - timestamp
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "usage_123456789"
+          description: Unique usage record identifier
+        type:
+          type: string
+          enum: [call_analysis, feedback_generation, integration_sync, api_call]
+          example: "call_analysis"
+          description: Type of usage
+        credits:
+          type: integer
+          example: 5
+          description: Credits consumed
+        description:
+          type: string
+          example: "Analyzed 30-minute Gong call"
+          description: Description of the usage
+        metadata:
+          type: object
+          description: Additional usage metadata
+          example:
+            callDuration: 1800
+            participants: 3
+            integrationType: "gong"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-27T10:30:00Z"
+          description: When the usage occurred
+
+    SubmitFeedbackRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          minLength: 10
+          maxLength: 50000
+          example: "Multiple users mentioned wanting a dark mode toggle in the settings panel during recent calls."
+          description: Feedback content (10-50,000 characters)
+        title:
+          type: string
+          maxLength: 250
+          example: "Users want dark mode toggle"
+          description: Feedback title (max 250 characters)
+        source_url:
+          type: string
+          format: uri
+          maxLength: 1000
+          example: "https://gong.io/calls/abc123"
+          description: URL to original source (max 1000 characters)
+        source_id:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: "call_abc123"
+          description: Source identifier (1-50 characters)
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-27T10:30:00Z"
+          description: When the feedback was originally captured (ISO 8601 format)
+        customer_id:
+          type: string
+          maxLength: 50
+          example: "customer_123"
+          description: Customer identifier (max 50 characters)
+        reporter_name:
+          type: string
+          maxLength: 100
+          example: "John Smith"
+          description: Name of person who provided feedback (max 100 characters)
+        reporter_email:
+          type: string
+          format: email
+          maxLength: 255
+          example: "john@example.com"
+          description: Email of person who provided feedback (max 255 characters)
+        language:
+          type: string
+          pattern: '^[a-z]{2}$'
+          example: "en"
+          description: Language code (2-character ISO 639-1)
+        metadata:
+          type: object
+          example: {"call_duration": 1800, "participants": 3}
+          description: Additional metadata
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 100
+          maxItems: 20
+          example: ["ui", "settings", "accessibility"]
+          description: Feedback tags (max 20 tags, 100 characters each)
+
+    Pagination:
+      type: object
+      required:
+        - page
+        - limit
+        - total
+        - pages
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          example: 1
+          description: Current page number
+        limit:
+          type: integer
+          minimum: 1
+          example: 20
+          description: Items per page
+        total:
+          type: integer
+          minimum: 0
+          example: 150
+          description: Total number of items
+        pages:
+          type: integer
+          minimum: 0
+          example: 8
+          description: Total number of pages
+
+    Error:
+      type: object
+      required:
+        - error
+        - code
+      properties:
+        error:
+          type: string
+          example: "Invalid request parameters"
+          description: Human-readable error message
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+          description: Error code for programmatic handling
+        details:
+          type: object
+          description: Additional error details
+          example:
+            field: "website"
+            reason: "Invalid URL format"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-27T10:30:00Z"
+          description: Error timestamp
+        request_id:
+          type: string
+          example: "req_123456789"
+          description: Request identifier for debugging
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Invalid request parameters"
+            code: "VALIDATION_ERROR"
+            details:
+              field: "website"
+              reason: "Invalid URL format"
+
+    Unauthorized:
+      description: Unauthorized - invalid or missing API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Invalid or missing API key"
+            code: "INVALID_API_KEY"
+
+    Forbidden:
+      description: Forbidden - MCP integration not active
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "MCP integration is not active for this team"
+            code: "MCP_INTEGRATION_INACTIVE"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Resource not found"
+            code: "NOT_FOUND"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "An unexpected error occurred"
+            code: "INTERNAL_ERROR"
+
+tags:
+  - name: Ingest
+    description: Submit and track raw customer data for AI processing
+  - name: Insights
+    description: AI-processed insights management operations
+  - name: Team
+    description: Team management operations
+  - name: Usage
+    description: Usage tracking and monitoring
+  - name: Integrations
+    description: Integration management

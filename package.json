@@ -2,11 +2,15 @@
   "name": "playwrightPlay",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": "https://github.com/lapitananna/playwrightPlay.git",
+  "repository": "https://github.com/lapitananna/playwright_testTask.git",
   "license": "MIT",
   "devDependencies": {
-    "@playwright/test": "^1.51.0",
+    "@playwright/test": "^1.56.0",
     "@types/node": "^22.13.0"
   },
-  "scripts": {}
+  "scripts": {
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3"
+  }
 }
