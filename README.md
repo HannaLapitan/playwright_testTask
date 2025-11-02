@@ -8,6 +8,8 @@ yarn playwright test --project=api-tests
 
 <!-- password and user are provided for the testing purpose -->
 Add .env file
-USER_EMAIL=testclosedloopai@seekercompany.anonaddy.me
-USER_PASSWORD=PassWord123!
-API_KEY=48f31e05419b2c99f659bdb8063aa250993935f8a62a4251142b06e6d4bf7ee7
+| Key | Value |
+| :--- | :--- |
+| `USER_EMAIL` | `testclosedloopai@seekercompany.anonaddy.me` |
+| `USER_PASSWORD` | `PassWord123!` |
+| `API_KEY` | `48f31e05419b2c99f659bdb8063aa250993935f8a62a4251142b06e6d4bf7ee7` |
